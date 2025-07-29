@@ -1,26 +1,35 @@
-import React, { useState, useContext } from 'react';
-import { Container, Form, Button, Row, Col, Card, Alert, Spinner } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext';
-import { createSLA, submitSLA } from '../services/api';
-import { getDepartments } from '../services/api';
-import { useEffect } from 'react';
+import { useState } from "react";
+import {
+  Container,
+  Form,
+  Button,
+  Row,
+  Col,
+  Card,
+  Alert,
+  Spinner,
+} from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../contexts/UserContext";
+import { createSLA, submitSLA } from "../services/api";
+import { getDepartments } from "../services/api";
+import { useEffect } from "react";
 
 const SLACreate = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    targetDept: '',
-    startDate: '',
-    endDate: '',
-    priority: 'medium',
-    metrics: [{ name: '', target: '', measurement: '' }],
+    title: "",
+    description: "",
+    targetDept: "",
+    startDate: "",
+    endDate: "",
+    priority: "medium",
+    metrics: [{ name: "", target: "", measurement: "" }],
   });
   const [departments, setDepartments] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [deptLoading, setDeptLoading] = useState(true);
 
@@ -28,93 +37,98 @@ const SLACreate = () => {
     const fetchDepartments = async () => {
       try {
         const depts = await getDepartments();
-        setDepartments(depts.map(d => d.name));
+        setDepartments(depts.map((d) => d.name));
       } catch (error) {
-        console.error('Error fetching departments:', error);
+        console.error("Error fetching departments:", error);
       } finally {
         setDeptLoading(false);
       }
     };
-    
+
     fetchDepartments();
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleMetricChange = (index, e) => {
     const { name, value } = e.target;
     const updatedMetrics = [...formData.metrics];
     updatedMetrics[index][name] = value;
-    setFormData(prev => ({ ...prev, metrics: updatedMetrics }));
+    setFormData((prev) => ({ ...prev, metrics: updatedMetrics }));
   };
 
   const addMetric = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      metrics: [...prev.metrics, { name: '', target: '', measurement: '' }]
+      metrics: [...prev.metrics, { name: "", target: "", measurement: "" }],
     }));
   };
 
   const removeMetric = (index) => {
     if (formData.metrics.length > 1) {
       const updatedMetrics = formData.metrics.filter((_, i) => i !== index);
-      setFormData(prev => ({ ...prev, metrics: updatedMetrics }));
+      setFormData((prev) => ({ ...prev, metrics: updatedMetrics }));
     }
   };
 
   const validateStep1 = () => {
-    if (!formData.title || !formData.targetDept || !formData.startDate || !formData.endDate) {
-      setError('Please fill all required fields');
+    if (
+      !formData.title ||
+      !formData.targetDept ||
+      !formData.startDate ||
+      !formData.endDate
+    ) {
+      setError("Please fill all required fields");
       return false;
     }
-    setError('');
+    setError("");
     return true;
   };
 
   const validateStep2 = () => {
     const emptyMetrics = formData.metrics.some(
-      metric => !metric.name || !metric.target || !metric.measurement
+      (metric) => !metric.name || !metric.target || !metric.measurement
     );
     if (emptyMetrics) {
-      setError('Please fill all metric fields');
+      setError("Please fill all metric fields");
       return false;
     }
-    setError('');
+    setError("");
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (step === 1 && validateStep1()) {
       setStep(2);
       return;
     }
-    
+
     if (step === 2 && validateStep2()) {
       try {
         setLoading(true);
-        
+
         // Prepare SLA data
         const slaData = {
           ...formData,
           raisingDept: user.department,
           createdBy: user._id,
-          status: 'draft'
+          status: "draft",
         };
-        
+
         // Create SLA
         const createdSLA = await createSLA(slaData);
-        
+
         // Submit SLA for review
-        const submittedSLA = await submitSLA(createdSLA._id);
-        
-        navigate('/dashboard');
+        await submitSLA(createdSLA._id);
+
+        navigate("/dashboard");
       } catch (error) {
-        setError(error.message || 'Failed to create SLA');
+        setError(error.message || "Failed to create SLA");
       } finally {
         setLoading(false);
       }
@@ -135,8 +149,12 @@ const SLACreate = () => {
         <Card.Header>
           <h4>Create New SLA</h4>
           <div className="d-flex">
-            <div className={`step ${step >= 1 ? 'active' : ''}`}>1. Basic Info</div>
-            <div className={`step ${step >= 2 ? 'active' : ''}`}>2. Metrics</div>
+            <div className={`step ${step >= 1 ? "active" : ""}`}>
+              1. Basic Info
+            </div>
+            <div className={`step ${step >= 2 ? "active" : ""}`}>
+              2. Metrics
+            </div>
           </div>
         </Card.Header>
         <Card.Body>
@@ -176,9 +194,11 @@ const SLACreate = () => {
                     >
                       <option value="">Select Department</option>
                       {departments
-                        .filter(d => d !== user.department) // Exclude own department
-                        .map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
+                        .filter((d) => d !== user.department) // Exclude own department
+                        .map((dept) => (
+                          <option key={dept} value={dept}>
+                            {dept}
+                          </option>
                         ))}
                     </Form.Select>
                   </Form.Group>
@@ -274,7 +294,11 @@ const SLACreate = () => {
                     </Col>
                   </Row>
                 ))}
-                <Button variant="secondary" onClick={addMetric} className="mb-3">
+                <Button
+                  variant="secondary"
+                  onClick={addMetric}
+                  className="mb-3"
+                >
                   Add Another Metric
                 </Button>
               </div>
@@ -289,7 +313,11 @@ const SLACreate = () => {
               <Button variant="primary" type="submit" disabled={loading}>
                 {loading ? (
                   <Spinner animation="border" size="sm" />
-                ) : step === 1 ? 'Next' : 'Submit SLA'}
+                ) : step === 1 ? (
+                  "Next"
+                ) : (
+                  "Submit SLA"
+                )}
               </Button>
             </div>
           </Form>

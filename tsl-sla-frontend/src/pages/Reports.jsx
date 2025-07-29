@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Tab, Tabs, Table, Row, Col, Button, Spinner } from 'react-bootstrap';
-import { getSLA, getProgress, getComments } from '../services/api';
+import { getSLA, getProgress } from '../services/api';
 
 const Reports = () => {
   const [slaData, setSLAData] = useState([]);
@@ -12,8 +12,6 @@ const Reports = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // In a real app, we would have specific report endpoints
-        // For demo, we'll fetch all SLAs and progress
         const slas = await getSLA();
         const progress = await getProgress();
         
@@ -29,7 +27,6 @@ const Reports = () => {
     fetchData();
   }, []);
 
-  // Calculate department stats
   const departmentStats = slaData.reduce((acc, sla) => {
     if (!acc[sla.raisingDept]) {
       acc[sla.raisingDept] = { pending: 0, active: 0, overdue: 0 };
